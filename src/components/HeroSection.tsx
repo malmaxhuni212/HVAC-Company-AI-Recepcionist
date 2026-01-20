@@ -1,10 +1,14 @@
-import { VoiceCallButton } from "./VoiceCallButton";
+import { VoiceCallButton, VoiceCallButtonHandle } from "./VoiceCallButton";
 import { Shield, Clock, CheckCircle } from "lucide-react";
 import heroBackground from "@/assets/hero-hvac-bg.jpg";
 
-export function HeroSection() {
+interface HeroSectionProps {
+  micRef?: React.RefObject<VoiceCallButtonHandle>;
+}
+
+export function HeroSection({ micRef }: HeroSectionProps) {
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+    <section id="services" className="relative min-h-[90vh] flex items-center justify-center overflow-hidden scroll-mt-16">
       {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -43,7 +47,7 @@ export function HeroSection() {
 
           {/* Voice Call CTA */}
           <div className="mb-12">
-            <VoiceCallButton />
+            <VoiceCallButton ref={micRef} />
           </div>
 
           {/* Quick Trust Indicators */}

@@ -142,4 +142,33 @@
       opacity: 0.8;
     }
   }
+
+  .attention-shake {
+    animation: attention-shake 0.15s ease-in-out infinite, 
+               attention-glow 0.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes attention-shake {
+    0%, 100% {
+      transform: translateX(0) rotate(0deg);
+    }
+    25% {
+      transform: translateX(-4px) rotate(-5deg);
+    }
+    50% {
+      transform: translateX(4px) rotate(5deg);
+    }
+    75% {
+      transform: translateX(-4px) rotate(-5deg);
+    }
+  }
+
+  @keyframes attention-glow {
+    0% {
+      box-shadow: 0 0 10px hsl(24 95% 53% / 0.6), 0 0 20px hsl(24 95% 53% / 0.4);
+    }
+    100% {
+      box-shadow: 0 0 20px hsl(24 95% 53% / 0.8), 0 0 40px hsl(24 95% 53% / 0.6), 0 0 60px hsl(24 95% 53% / 0.4);
+    }
+  }
 }
