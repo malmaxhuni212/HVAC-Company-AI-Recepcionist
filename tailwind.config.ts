@@ -57,11 +57,23 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        trust: {
+          DEFAULT: "hsl(var(--trust-blue))",
+          light: "hsl(var(--trust-blue-light))",
+        },
+        cta: {
+          DEFAULT: "hsl(var(--cta-orange))",
+          hover: "hsl(var(--cta-orange-hover))",
+        },
+        success: "hsl(var(--success-green))",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {
