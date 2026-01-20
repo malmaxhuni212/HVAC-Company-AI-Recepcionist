@@ -1,27 +1,31 @@
 import { VoiceCallButton } from "./VoiceCallButton";
 import { Shield, Clock, CheckCircle } from "lucide-react";
+import heroBackground from "@/assets/hero-hvac-bg.jpg";
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-background via-secondary/30 to-background overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-cta rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-trust-light rounded-full blur-3xl" />
-      </div>
+    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${heroBackground})` }}
+      />
+      
+      {/* Dark Overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/70 to-primary/90" />
 
       <div className="container mx-auto px-4 py-20 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           {/* Trust Badge */}
-          <div className="inline-flex items-center gap-2 bg-secondary/80 backdrop-blur-sm px-4 py-2 rounded-full mb-8">
-            <Shield className="w-4 h-4 text-success" />
-            <span className="text-sm font-medium text-foreground">
+          <div className="inline-flex items-center gap-2 bg-background/20 backdrop-blur-sm px-4 py-2 rounded-full mb-8 border border-primary-foreground/20">
+            <Shield className="w-4 h-4 text-cta" />
+            <span className="text-sm font-medium text-primary-foreground">
               Licensed & Insured • A+ BBB Rating
             </span>
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground leading-tight mb-6">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-primary-foreground leading-tight mb-6">
             Fast, Reliable{" "}
             <span className="text-cta">HVAC Repair</span>
             <br />
@@ -29,10 +33,10 @@ export function HeroSection() {
           </h1>
 
           {/* Subheadline */}
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
             24/7 Emergency Service. No hidden fees.
             <br />
-            <span className="text-foreground font-medium">
+            <span className="text-primary-foreground font-medium">
               Speak directly with our dispatch team.
             </span>
           </p>
@@ -43,9 +47,9 @@ export function HeroSection() {
           </div>
 
           {/* Quick Trust Indicators */}
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-primary-foreground/80">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-success" />
+              <CheckCircle className="w-5 h-5 text-cta" />
               <span>Free Estimates</span>
             </div>
             <div className="flex items-center gap-2">
@@ -53,7 +57,7 @@ export function HeroSection() {
               <span>Same Day Service</span>
             </div>
             <div className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-trust" />
+              <Shield className="w-5 h-5 text-cta" />
               <span>100% Satisfaction Guarantee</span>
             </div>
           </div>
