@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, LogOut, Clock, MapPin, User } from "lucide-react";
+import { ArrowLeft, LogOut, Clock, User, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { format, isToday, isThisWeek } from "date-fns";
 
@@ -53,7 +53,10 @@ export default function TechnicianDashboard() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex justify-between items-center mb-6">
           <Button variant="ghost" onClick={() => navigate("/")} className="text-primary-foreground/70"><ArrowLeft className="w-4 h-4 mr-2" /> Home</Button>
-          <Button variant="ghost" onClick={() => { signOut(); navigate("/"); }} className="text-red-400"><LogOut className="w-4 h-4 mr-2" /> Sign Out</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/technician/profile")} className="border-border/30 text-primary-foreground/70"><Settings className="w-4 h-4 mr-2" /> My Profile</Button>
+            <Button variant="ghost" onClick={() => { signOut(); navigate("/"); }} className="text-red-400"><LogOut className="w-4 h-4 mr-2" /> Sign Out</Button>
+          </div>
         </div>
 
         <div className="flex justify-between items-center mb-6">

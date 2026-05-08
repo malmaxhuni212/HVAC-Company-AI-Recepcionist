@@ -20,20 +20,13 @@ export function CTASection() {
             and enjoy peace of mind knowing your home is in good hands.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
+          <div className="flex justify-center mb-10">
             <Button 
               size="lg" 
-              className="bg-cta text-accent-foreground hover:bg-cta-hover gap-2 text-lg px-8"
+              className="bg-cta text-accent-foreground hover:bg-cta-hover gap-2 text-lg w-full sm:w-64 px-12"
             >
               <Phone className="w-5 h-5" />
-              Call (555) 123-4567
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 gap-2 text-lg px-8"
-            >
-              Schedule Online
+              Contact
             </Button>
           </div>
 

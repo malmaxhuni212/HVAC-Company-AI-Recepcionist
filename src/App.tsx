@@ -11,10 +11,13 @@ import Signup from "./pages/Signup";
 import ProfilePage from "./pages/ProfilePage";
 import BookingPage from "./pages/BookingPage";
 import TechnicianDashboard from "./pages/TechnicianDashboard";
+import TechnicianProfile from "./pages/TechnicianProfile";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboardHome from "./pages/admin/AdminDashboardHome";
 import AdminBookings from "./pages/admin/AdminBookings";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPayments from "./pages/admin/AdminPayments";
+import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminReports from "./pages/admin/AdminReports";
 import NotFound from "./pages/NotFound";
 
@@ -34,10 +37,13 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/book" element={<ProtectedRoute requiredRole="client"><BookingPage /></ProtectedRoute>} />
             <Route path="/technician" element={<ProtectedRoute requiredRole="technician"><TechnicianDashboard /></ProtectedRoute>} />
+            <Route path="/technician/profile" element={<ProtectedRoute requiredRole="technician"><TechnicianProfile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminDashboardHome />} />
               <Route path="bookings" element={<AdminBookings />} />
               <Route path="users" element={<AdminUsers />} />
+              <Route path="payments" element={<AdminPayments />} />
+              <Route path="notifications" element={<AdminNotifications />} />
               <Route path="reports" element={<AdminReports />} />
             </Route>
             <Route path="*" element={<NotFound />} />

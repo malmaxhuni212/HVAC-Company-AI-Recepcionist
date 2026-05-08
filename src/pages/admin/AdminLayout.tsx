@@ -4,13 +4,15 @@ import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, CalendarCheck, Users, BarChart3, LogOut, Home } from "lucide-react";
+import { LayoutDashboard, CalendarCheck, Users, BarChart3, LogOut, Home, DollarSign, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Bookings", url: "/admin/bookings", icon: CalendarCheck },
   { title: "Users", url: "/admin/users", icon: Users },
+  { title: "Payments", url: "/admin/payments", icon: DollarSign },
+  { title: "Notifications", url: "/admin/notifications", icon: Bell },
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
 ];
 
