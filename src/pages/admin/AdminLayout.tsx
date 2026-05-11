@@ -26,7 +26,7 @@ function AdminSidebar() {
     <Sidebar collapsible="icon" className="border-r border-border/50">
       <SidebarContent className="bg-[#0a1628]">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-primary-foreground/50">Metro Admin</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-white">Metro Admin</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
