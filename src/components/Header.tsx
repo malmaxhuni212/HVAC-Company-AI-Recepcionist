@@ -56,6 +56,7 @@ export function Header() {
                 </Button>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
