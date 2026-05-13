@@ -21,7 +21,7 @@ const Index = () => {
         <HeroSection micRef={voiceButtonRef} />
         <FeaturesSection />
         <TestimonialsSection />
-        <CTASection />
+        <ContactSection />
       </main>
       <Footer />
       <TalkToSarahButton onTrigger={handleTalkToSarah} />
