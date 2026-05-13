@@ -32,11 +32,19 @@ export function ContactSection() {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from("contact_submissions").insert({
+    await supabase.from("contact_submissions").insert({
       name: parsed.data.name,
       email: parsed.data.email,
       phone: parsed.data.phone || null,
       message: parsed.data.message,
+    });
+    const { error } = await supabase.functions.invoke("send-contact-email", {
+      body: {
+        name: parsed.data.name,
+        email: parsed.data.email,
+        phone: parsed.data.phone || null,
+        message: parsed.data.message,
+      },
     });
     setSubmitting(false);
     if (error) {
