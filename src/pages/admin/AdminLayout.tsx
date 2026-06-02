@@ -31,9 +31,9 @@ function AdminSidebar() {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="!text-white hover:!text-white">
+                  <SidebarMenuButton asChild className="!text-white hover:!bg-white hover:!text-black">
                     <NavLink to={item.url} end={item.url === "/admin"} className={({ isActive }) =>
-                      `flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${isActive ? "bg-cta/20 !text-cta" : "!text-white hover:bg-white/10"}`
+                      `flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${isActive ? "bg-cta/20 !text-cta" : "!text-white hover:!bg-white hover:!text-black"}`
                     }>
                       <item.icon className="h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
