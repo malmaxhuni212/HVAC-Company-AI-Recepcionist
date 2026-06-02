@@ -4,8 +4,8 @@ import { RetellWebClient } from "retell-client-js-sdk";
 
 type CallStatus = "idle" | "connecting" | "active" | "ended";
 
-const AGENT_ID = "agent_ab04be5ca9022cdce67756520d";
-const API_KEY = "key_0921257b678c00a0a58892594f6f";
+const AGENT_ID = "agent_f82b736178f296d4b58bc3589c";
+const API_KEY = "key_c00d7b2dfc5cd1078400ab0d0594";
 
 export interface VoiceCallButtonHandle {
   triggerAttention: () => void;
