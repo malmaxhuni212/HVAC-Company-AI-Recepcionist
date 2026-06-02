@@ -26,7 +26,7 @@ export function Header() {
             <div className="w-10 h-10 bg-cta rounded-lg flex items-center justify-center">
               <ThermometerSun className="w-6 h-6 text-accent-foreground" />
             </div>
-            <div className="hidden sm:block">
+            <div className="block">
               <p className="font-bold text-foreground leading-tight">Metro Heating</p>
               <p className="text-xs text-muted-foreground -mt-0.5">& Cooling</p>
             </div>
