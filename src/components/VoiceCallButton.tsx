@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { Mic, PhoneOff, MessageCircle } from "lucide-react";
 import { RetellWebClient } from "retell-client-js-sdk";
+import { supabase } from "@/integrations/supabase/client";
 
 type CallStatus = "idle" | "connecting" | "active" | "ended";
 
-const AGENT_ID = "agent_f82b736178f296d4b58bc3589c";
-const API_KEY = "key_c00d7b2dfc5cd1078400ab0d0594";
+
 
 export interface VoiceCallButtonHandle {
   triggerAttention: () => void;
@@ -63,23 +63,14 @@ export const VoiceCallButton = forwardRef<VoiceCallButtonHandle, object>((_, ref
     setIsAttention(false);
 
     try {
-      const response = await fetch("https://api.retellai.com/v2/create-web-call", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${API_KEY}`,
-        },
-        body: JSON.stringify({
-          agent_id: AGENT_ID,
-        }),
+      const { data, error } = await supabase.functions.invoke("create-retell-call", {
+        body: {},
       });
 
-      if (!response.ok) {
+      if (error || !data?.access_token) {
         throw new Error("Failed to create web call");
       }
 
-      const data = await response.json();
-      
       await retellClientRef.current?.startCall({
         accessToken: data.access_token,
       });
@@ -88,6 +79,7 @@ export const VoiceCallButton = forwardRef<VoiceCallButtonHandle, object>((_, ref
       setCallStatus("idle");
     }
   };
+
 
   const endCall = () => {
     retellClientRef.current?.stopCall();

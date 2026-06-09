@@ -1,7 +1,10 @@
 project_id = "amggmmfgiszbcbjvluoe"
 
 [functions.create-booking]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-contact-email]
+verify_jwt = false
+
+[functions.create-retell-call]
 verify_jwt = false
