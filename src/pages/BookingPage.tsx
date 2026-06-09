@@ -7,10 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, CheckCircle, CreditCard, ArrowLeft, ArrowRight, Wrench } from "lucide-react";
+import { CheckCircle, CreditCard, ArrowLeft, ArrowRight, Wrench, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 const TIME_SLOTS = ["8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"];
@@ -25,6 +24,7 @@ export default function BookingPage() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [bookingComplete, setBookingComplete] = useState(false);
@@ -32,6 +32,12 @@ export default function BookingPage() {
   useEffect(() => {
     supabase.from("services").select("*").then(({ data }) => { if (data) setServices(data); });
   }, []);
+
+  useEffect(() => {
+    if (profile?.email || user?.email) setContactEmail(profile?.email || user?.email || "");
+  }, [profile, user]);
+
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail.trim());
 
   const handlePayment = async () => {
     if (!selectedService || !selectedDate || !selectedTime || !user || !profile) return;
@@ -46,7 +52,7 @@ export default function BookingPage() {
     const { data: booking, error } = await supabase.from("bookings").insert({
       user_id: user.id,
       client_name: profile.full_name || profile.email || "",
-      client_email: profile.email || user.email || "",
+      client_email: contactEmail.trim(),
       appointment_time: appointmentDate.toISOString(),
       service_id: selectedService.id,
       status: "confirmed",
@@ -59,19 +65,34 @@ export default function BookingPage() {
       return;
     }
 
-    // Create invoice
     if (booking) {
       await supabase.from("invoices").insert({
         booking_id: booking.id,
         amount: selectedService.price,
         status: "paid",
       });
+
+      // Send confirmation email via Resend edge function
+      const { error: emailErr } = await supabase.functions.invoke("send-booking-confirmation", {
+        body: {
+          to: contactEmail.trim(),
+          customerName: profile.full_name || contactEmail.trim(),
+          serviceName: selectedService.name,
+          appointmentTime: appointmentDate.toISOString(),
+          amount: Number(selectedService.price),
+        },
+      });
+      if (emailErr) {
+        console.error("Email send failed:", emailErr);
+        toast.warning("Booking saved, but confirmation email failed to send.");
+      } else {
+        toast.success(`📧 Confirmation email sent to ${contactEmail.trim()}`);
+      }
     }
 
     setLoading(false);
     setBookingComplete(true);
     toast.success("🎉 Booking confirmed! Payment processed successfully.");
-    toast.info("📧 Confirmation email sent to " + (profile.email || user.email));
   };
 
   if (bookingComplete) {
@@ -84,6 +105,7 @@ export default function BookingPage() {
             <p className="text-muted-foreground">Your {selectedService?.name} appointment is scheduled for</p>
             <p className="text-lg font-semibold">{selectedDate && format(selectedDate, "MMMM d, yyyy")} at {selectedTime}</p>
             <p className="text-sm text-muted-foreground">Invoice Total: ${selectedService?.price.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground">A confirmation email has been sent to {contactEmail}</p>
             <div className="flex gap-3 justify-center pt-4">
               <Button onClick={() => navigate("/profile")} className="bg-cta hover:bg-cta/90 text-accent-foreground">View My Bookings</Button>
               <Button variant="outline" onClick={() => navigate("/")}>Back to Home</Button>
@@ -94,6 +116,8 @@ export default function BookingPage() {
     );
   }
 
+  const steps = ["Service", "Date & Time", "Contact", "Review", "Payment"];
+
   return (
     <div className="min-h-screen bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -101,20 +125,18 @@ export default function BookingPage() {
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Home
         </Button>
         <h1 className="text-3xl font-bold mb-2">Book a Service</h1>
-        {/* Stepper */}
-        <div className="flex items-center gap-2 mb-8">
-          {["Service", "Date & Time", "Review", "Payment"].map((label, i) => (
+        <div className="flex items-center gap-2 mb-8 flex-wrap">
+          {steps.map((label, i) => (
             <div key={label} className="flex items-center gap-2">
               <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold", step > i + 1 ? "bg-green-500 text-white" : step === i + 1 ? "bg-cta text-accent-foreground" : "bg-primary-foreground/20 text-primary-foreground/50")}>
                 {step > i + 1 ? "✓" : i + 1}
               </div>
               <span className={cn("text-sm hidden sm:inline", step === i + 1 ? "text-cta font-medium" : "text-primary-foreground/50")}>{label}</span>
-              {i < 3 && <div className="w-8 h-px bg-primary-foreground/20" />}
+              {i < steps.length - 1 && <div className="w-8 h-px bg-primary-foreground/20" />}
             </div>
           ))}
         </div>
 
-        {/* Step 1: Select Service */}
         {step === 1 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {services.map((s) => (
@@ -139,7 +161,6 @@ export default function BookingPage() {
           </div>
         )}
 
-        {/* Step 2: Date & Time */}
         {step === 2 && (
           <Card>
             <CardContent className="pt-6">
@@ -165,8 +186,36 @@ export default function BookingPage() {
           </Card>
         )}
 
-        {/* Step 3: Review */}
         {step === 3 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Mail className="w-5 h-5" /> Confirmation Email</CardTitle>
+              <CardDescription>Where should we send your booking confirmation?</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="contact-email">Email address</Label>
+                <Input
+                  id="contact-email"
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  maxLength={254}
+                />
+                {!emailValid && contactEmail.length > 0 && (
+                  <p className="text-xs text-red-500">Please enter a valid email address.</p>
+                )}
+              </div>
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
+                <Button onClick={() => setStep(4)} disabled={!emailValid} className="bg-cta hover:bg-cta/90 text-accent-foreground">Continue <ArrowRight className="w-4 h-4 ml-2" /></Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 4 && (
           <Card>
             <CardHeader><CardTitle>Review Your Booking</CardTitle></CardHeader>
             <CardContent className="space-y-4">
@@ -177,17 +226,17 @@ export default function BookingPage() {
                 <div><span className="text-muted-foreground">Time:</span><p className="font-semibold">{selectedTime}</p></div>
                 <div><span className="text-muted-foreground">Duration:</span><p className="font-semibold">{selectedService?.duration_minutes} minutes</p></div>
                 <div><span className="text-muted-foreground">Customer:</span><p className="font-semibold">{profile?.full_name || "—"}</p></div>
+                <div className="col-span-2"><span className="text-muted-foreground">Confirmation email:</span><p className="font-semibold">{contactEmail}</p></div>
               </div>
               <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
-                <Button onClick={() => setStep(4)} className="bg-cta hover:bg-cta/90 text-accent-foreground">Proceed to Payment <CreditCard className="w-4 h-4 ml-2" /></Button>
+                <Button variant="outline" onClick={() => setStep(3)}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
+                <Button onClick={() => setStep(5)} className="bg-cta hover:bg-cta/90 text-accent-foreground">Proceed to Payment <CreditCard className="w-4 h-4 ml-2" /></Button>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Step 4: Payment */}
-        {step === 4 && (
+        {step === 5 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><CreditCard className="w-5 h-5" /> Payment</CardTitle>
@@ -208,7 +257,7 @@ export default function BookingPage() {
                 <span className="text-lg font-bold">Total: <span className="text-cta">${selectedService?.price.toFixed(2)}</span></span>
               </div>
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(3)}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
+                <Button variant="outline" onClick={() => setStep(4)}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
                 <Button onClick={handlePayment} disabled={loading} className="bg-cta hover:bg-cta/90 text-accent-foreground">
                   {loading ? "Processing..." : `Pay $${selectedService?.price.toFixed(2)}`}
                 </Button>

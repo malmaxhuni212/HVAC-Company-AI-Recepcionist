@@ -8,9 +8,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Save, Calendar, LogOut } from "lucide-react";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Save, Calendar, LogOut, CalendarClock, XCircle, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+
+const TIME_SLOTS = ["8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"];
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
@@ -29,6 +41,16 @@ export default function ProfilePage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
 
+  // Reschedule dialog state
+  const [rescheduleBooking, setRescheduleBooking] = useState<any | null>(null);
+  const [newDate, setNewDate] = useState<Date>();
+  const [newTime, setNewTime] = useState("");
+  const [rescheduling, setRescheduling] = useState(false);
+
+  // Cancel dialog state
+  const [cancelBooking, setCancelBooking] = useState<any | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || "");
@@ -37,12 +59,17 @@ export default function ProfilePage() {
     }
   }, [profile]);
 
-  useEffect(() => {
-    if (user) {
-      supabase.from("bookings").select("*, services(name, price)").eq("user_id", user.id).order("appointment_time", { ascending: false })
-        .then(({ data }) => { if (data) setBookings(data); });
-    }
-  }, [user]);
+  const loadBookings = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("bookings")
+      .select("*, services(name, price)")
+      .eq("user_id", user.id)
+      .order("appointment_time", { ascending: false });
+    if (data) setBookings(data);
+  };
+
+  useEffect(() => { loadBookings(); }, [user]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -54,6 +81,67 @@ export default function ProfilePage() {
   };
 
   const handleSignOut = async () => { await signOut(); navigate("/"); };
+
+  const canModify = (b: any) => {
+    if (b.status === "cancelled" || b.status === "completed") return false;
+    return new Date(b.appointment_time).getTime() > Date.now();
+  };
+
+  const submitReschedule = async () => {
+    if (!rescheduleBooking || !newDate || !newTime) return;
+    setRescheduling(true);
+    const [timePart, ampm] = newTime.split(" ");
+    const [h, m] = timePart.split(":").map(Number);
+    const hours = ampm === "PM" && h !== 12 ? h + 12 : ampm === "AM" && h === 12 ? 0 : h;
+    const apptDate = new Date(newDate);
+    apptDate.setHours(hours, m, 0, 0);
+
+    const { error } = await supabase
+      .from("bookings")
+      .update({
+        appointment_time: apptDate.toISOString(),
+        rescheduled_count: (rescheduleBooking.rescheduled_count || 0) + 1,
+      })
+      .eq("id", rescheduleBooking.id);
+
+    setRescheduling(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Booking rescheduled successfully");
+    setRescheduleBooking(null);
+    setNewDate(undefined);
+    setNewTime("");
+    loadBookings();
+  };
+
+  const submitCancel = async () => {
+    if (!cancelBooking) return;
+    setCancelling(true);
+    const paid = Number(cancelBooking.services?.price || 0);
+    const refund = Math.round(paid * 0.8 * 100) / 100;
+
+    const { error } = await supabase
+      .from("bookings")
+      .update({
+        status: "cancelled",
+        cancelled_at: new Date().toISOString(),
+        refund_amount: refund,
+        payment_status: "refunded",
+      })
+      .eq("id", cancelBooking.id);
+
+    if (!error) {
+      await supabase
+        .from("invoices")
+        .update({ status: "refunded" })
+        .eq("booking_id", cancelBooking.id);
+    }
+
+    setCancelling(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Booking cancelled. Refund of $${refund.toFixed(2)} (80%) will be processed.`);
+    setCancelBooking(null);
+    loadBookings();
+  };
 
   return (
     <div className="min-h-screen bg-primary text-primary-foreground">
@@ -92,17 +180,58 @@ export default function ProfilePage() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow><TableHead>Service</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead><TableHead>Amount</TableHead></TableRow>
+                    <TableRow>
+                      <TableHead>Service</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {bookings.map((b) => (
-                      <TableRow key={b.id}>
-                        <TableCell className="font-medium">{b.services?.name || "—"}</TableCell>
-                        <TableCell>{format(new Date(b.appointment_time), "MMM d, yyyy h:mm a")}</TableCell>
-                        <TableCell><Badge className={statusColors[b.status] || ""}>{b.status.replace("_", " ")}</Badge></TableCell>
-                        <TableCell>${b.services?.price?.toFixed(2) || "—"}</TableCell>
-                      </TableRow>
-                    ))}
+                    {bookings.map((b) => {
+                      const modifiable = canModify(b);
+                      const alreadyRescheduled = (b.rescheduled_count || 0) >= 1;
+                      return (
+                        <TableRow key={b.id}>
+                          <TableCell className="font-medium">{b.services?.name || "—"}</TableCell>
+                          <TableCell>{format(new Date(b.appointment_time), "MMM d, yyyy h:mm a")}</TableCell>
+                          <TableCell><Badge className={statusColors[b.status] || ""}>{b.status.replace("_", " ")}</Badge></TableCell>
+                          <TableCell>
+                            ${b.services?.price?.toFixed(2) || "—"}
+                            {b.refund_amount && (
+                              <div className="text-xs text-muted-foreground">Refund: ${Number(b.refund_amount).toFixed(2)}</div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={!modifiable || alreadyRescheduled}
+                                title={alreadyRescheduled ? "Already rescheduled once" : "Reschedule"}
+                                onClick={() => {
+                                  setRescheduleBooking(b);
+                                  setNewDate(new Date(b.appointment_time));
+                                  setNewTime("");
+                                }}
+                              >
+                                <CalendarClock className="w-4 h-4 mr-1" /> Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={!modifiable}
+                                className="text-red-500 hover:text-red-600"
+                                onClick={() => setCancelBooking(b)}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" /> Cancel
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
@@ -110,6 +239,86 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
+
+      {/* Reschedule Dialog */}
+      <Dialog open={!!rescheduleBooking} onOpenChange={(o) => !o && setRescheduleBooking(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reschedule Booking</DialogTitle>
+            <DialogDescription>
+              You can reschedule a booking once. Pick a new date and time below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>New Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left", !newDate && "text-muted-foreground")}>
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    {newDate ? format(newDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarPicker
+                    mode="single"
+                    selected={newDate}
+                    onSelect={setNewDate}
+                    disabled={(date) => date < new Date() || date.getDay() === 0}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label>New Time</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {TIME_SLOTS.map((t) => (
+                  <Button
+                    key={t}
+                    type="button"
+                    variant={newTime === t ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setNewTime(t)}
+                  >
+                    {t}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRescheduleBooking(null)}>Back</Button>
+            <Button onClick={submitReschedule} disabled={!newDate || !newTime || rescheduling} className="bg-cta hover:bg-cta/90 text-accent-foreground">
+              {rescheduling ? "Saving..." : "Confirm Reschedule"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Dialog */}
+      <AlertDialog open={!!cancelBooking} onOpenChange={(o) => !o && setCancelBooking(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel this booking?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cancelling refunds <strong>80%</strong> of the paid amount.
+              {cancelBooking?.services?.price != null && (
+                <>
+                  {" "}You paid <strong>${Number(cancelBooking.services.price).toFixed(2)}</strong> and will receive a refund of{" "}
+                  <strong>${(Number(cancelBooking.services.price) * 0.8).toFixed(2)}</strong>.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+            <AlertDialogAction onClick={submitCancel} disabled={cancelling} className="bg-red-500 hover:bg-red-600">
+              {cancelling ? "Cancelling..." : "Cancel Booking"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

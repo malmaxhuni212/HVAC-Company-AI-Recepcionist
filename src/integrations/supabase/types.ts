@@ -18,13 +18,16 @@ export type Database = {
         Row: {
           appointment_time: string
           cal_booking_id: string | null
+          cancelled_at: string | null
           client_email: string
           client_name: string
           created_at: string
           id: string
           notes: string | null
           payment_status: string
+          refund_amount: number | null
           reminder_sent: boolean
+          rescheduled_count: number
           service_id: string | null
           status: Database["public"]["Enums"]["booking_status"]
           technician_id: string | null
@@ -33,13 +36,16 @@ export type Database = {
         Insert: {
           appointment_time: string
           cal_booking_id?: string | null
+          cancelled_at?: string | null
           client_email: string
           client_name: string
           created_at?: string
           id?: string
           notes?: string | null
           payment_status?: string
+          refund_amount?: number | null
           reminder_sent?: boolean
+          rescheduled_count?: number
           service_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           technician_id?: string | null
@@ -48,13 +54,16 @@ export type Database = {
         Update: {
           appointment_time?: string
           cal_booking_id?: string | null
+          cancelled_at?: string | null
           client_email?: string
           client_name?: string
           created_at?: string
           id?: string
           notes?: string | null
           payment_status?: string
+          refund_amount?: number | null
           reminder_sent?: boolean
+          rescheduled_count?: number
           service_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           technician_id?: string | null
